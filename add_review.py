@@ -29,6 +29,7 @@ for player in players.find():
             "$set": {
                 "review": [
                     {
+                        "_id": ObjectId(),
                         "username": usernames[random.randint(0, len(usernames) - 1)],
                         "comments": commentSection[random.randint(0, len(commentSection) - 1)],
                         "rating": random.randint(1, 5)
