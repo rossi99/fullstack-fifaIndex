@@ -30,8 +30,8 @@ def show_all_players():
     data_to_return = []
     for player in players.find().skip(page_start).limit(page_size):
         player['_id'] = str(player['_id'])
-        # for review in player['reviews']:
-        #     review["_id"] = str(review["_id"])
+        for review in player["review"]:
+            review["_id"] = str(review["_id"])
         data_to_return.append(player)
 
     return make_response(jsonify(data_to_return), 200)
@@ -44,8 +44,8 @@ def show_one_player(id):
     player = players.find_one({'_id': ObjectId(id)})
     if player is not None:
         player['_id'] = str(player['_id'])
-        # for review in player['reviews']:
-        #     review['_id'] = str(review['_id'])
+        for review in player["review"]:
+            review['_id'] = str(review['_id'])
         return make_response(jsonify(player), 200)
     else:
         return make_response(jsonify({"error": "Invalid player ID"}), 404)
@@ -140,7 +140,7 @@ def add_new_player_review(id):
     }
     players.update_one(
         {"_id": ObjectId(id)},
-        {"$push": {"reviews": new_review}}
+        {"$push": {"review": new_review}}
     )
     new_review_link = "http://localhost:5000/api/v1.0/players/" + id + "/reviews/" + str(new_review['_id'])
     return make_response(jsonify({"url": new_review_link}), 201)
@@ -149,8 +149,10 @@ def add_new_player_review(id):
 @app.route("/api/v1.0/players/<string:id>/reviews", methods=["GET"])
 def fetch_all_player_reviews(id):
     data_to_return = []
-    player = players.find_one({"_id": ObjectId(id)}, {"reviews": 1, "_id": 0})
-    for review in player["reviews"]:
+    player = players.find_one({"_id": ObjectId(id)}, {"review": 1, "_id": 0})
+    if player is None:
+        return make_response(jsonify({"error": "Invalid player ID or review ID"}), 404)
+    for review in player["review"]:
         review["_id"] = str(review["_id"])
         data_to_return.append(review)
     return make_response(jsonify(data_to_return), 200)
@@ -158,22 +160,22 @@ def fetch_all_player_reviews(id):
 
 @app.route("/api/v1.0/players/<pid>/reviews/<rid>", methods=["GET"])
 def fetch_one_player_review(pid, rid):
-    player = players.find_one({"reviews._id": ObjectId(rid)}, {"_id": 0, "reviews.$": 1})
+    player = players.find_one({"review._id": ObjectId(rid)}, {"_id": 0, "review.$": 1})
     if player is None:
         return make_response(jsonify({"error": "Invalid player ID or review ID"}), 404)
-    player['reviews'][0]['_id'] = str(player['reviews'][0]['_id'])
-    return make_response(jsonify(player['reviews'][0]), 200)
+    player['review'][0]['_id'] = str(player['review'][0]['_id'])
+    return make_response(jsonify(player['review'][0]), 200)
 
 
 @app.route("/api/v1.0/players/<pid>/reviews/<rid>", methods=["PUT"])
 def edit_player_review(pid, rid):
     edited_review = {
-        "reviews.$.username": request.form["username"],
-        "reviews.$.comment": request.form["comment"],
-        "reviews.$.rating": request.form['rating']
+        "review.$.username": request.form["username"],
+        "review.$.comment": request.form["comment"],
+        "review.$.rating": request.form['rating']
     }
     players.update_one(
-        {"reviews._id": ObjectId(rid)},
+        {"review._id": ObjectId(rid)},
         {"$set": edited_review}
     )
     edit_review_url = "http://localhost:5000/api/v1.0/players/" + pid + "/reviews/" + rid
@@ -184,7 +186,7 @@ def edit_player_review(pid, rid):
 def delete_player_review(pid, rid):
     players.update_one(
         {"_id": ObjectId(pid)},
-        {"$pull": {"reviews": {"_id": ObjectId(rid)}}}
+        {"$pull": {"review": {"_id": ObjectId(rid)}}}
     )
     return make_response(jsonify({}), 204)
 

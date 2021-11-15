@@ -23,18 +23,20 @@ for user in users.aggregate(pipeline):
 
 # adding the reviews fields
 for player in players.find():
-    players.update_one(
-        {"_id": player['_id']},
-        {
-            "$set": {
-                "review": [
-                    {
-                        "_id": ObjectId(),
-                        "username": usernames[random.randint(0, len(usernames) - 1)],
-                        "comments": commentSection[random.randint(0, len(commentSection) - 1)],
-                        "rating": random.randint(1, 5)
-                    }
-                ]
+    for i in range(2):
+        players.update_one(
+            {"_id": player['_id']},
+            {
+                "$set": {
+                    "review": [
+                        {
+                            "_id": ObjectId(),
+                            "username": usernames[random.randint(0, len(usernames) - 1)],
+                            "comments": commentSection[random.randint(0, len(commentSection) - 1)],
+                            "rating": random.randint(1, 5)
+                        }
+                    ]
+                }
             }
-        }
-    )
+        )
+        print(i)
